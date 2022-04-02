@@ -9,5 +9,7 @@ fun main(args: Array<String>) {
         if (res != CURLE_OK)
             println("curl_easy_perform() failed ${curl_easy_strerror(res)?.toKString()}")
         curl_easy_cleanup(this)
+
+        val a = 2UL
     }
 }
