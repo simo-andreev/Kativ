@@ -1,12 +1,16 @@
-import kotlinx.cinterop.CPointer
-import kotlinx.cinterop.UByteVarOf
-import kotlinx.cinterop.get
+import kotlinx.cinterop.*
 import libglew.*
 import libglfw.*
 import platform.posix.exit
 
 const val GL_TRUE: GLboolean = 1u
 const val GL_FALSE: GLboolean = 0u
+
+typealias VertexArraysGenFunc = PFNGLGENVERTEXARRAYSPROC
+typealias VertexArraysBindFunc = PFNGLBINDVERTEXARRAYPROC
+typealias VertexBufferGenFunc = PFNGLGENBUFFERSPROC
+typealias VertexBufferBindFunc = PFNGLBINDBUFFERPROC
+typealias VertexBufferDataFunc = PFNGLBUFFERDATAPROC
 
 fun main() {
     initGlfw()
@@ -25,23 +29,44 @@ fun main() {
         exit(-1)
     }
 
-    glfwMakeContextCurrent(window)
 
-    glewExperimental = GL_TRUE
+    memScoped {
+        glfwMakeContextCurrent(window)
+        println("0")
 
-    initGlew()
+        vaoBind()
 
-    // Ensure we can capture the escape key being pressed below
-    glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE)
+        println("1")
 
-    do {
-        // Draw nothing fn
 
-        // Swap buffers
-        glfwSwapBuffers(window);
-        glfwPollEvents();
-    } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0)
-    // Check if the ESC key was pressed or the window was closed
+        glewExperimental = GL_TRUE
+
+        initGlew()
+
+        // Ensure we can capture the escape key being pressed below
+        glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE)
+
+        vbufBind(
+            floatArrayOf(
+                -1.0f, -1.0f, 0.0f,
+                1.0f, -1.0f, 0.0f,
+                0.0f, 1.0f, 0.0f,
+            )
+        )
+        println("2")
+
+        do {
+            vaoBind()
+            println("3")
+
+            // Swap buffers
+            glfwSwapBuffers(window);
+            glfwPollEvents();
+        } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0)
+        // Check if the ESC key was pressed or the window was closed
+        println("4")
+
+    }
 
     glfwTerminate()
 }
@@ -82,3 +107,43 @@ private fun CPointer<UByteVarOf<UByte>>?.toKString(): CharSequence? {
     return sb
 }
 
+private inline fun MemScope.vaoBind() {
+    println("00")
+
+    val vertexArrayId: UIntVarOf<UInt> = alloc()
+    println("01")
+
+    val vaoGenFunc: VertexArraysGenFunc = glGenVertexArrays?: return
+    println("02")
+    vaoGenFunc(1, vertexArrayId.ptr)
+    println("03")
+
+    val vaoBindFunc: VertexArraysBindFunc = glBindVertexArray!!
+    println("04")
+    vaoBindFunc(vertexArrayId.value)
+    println("05")
+}
+
+private inline fun MemScope.vbufBind(floatArray: FloatArray) {
+    // This will identify our vertex buffer
+    val vertexbuffer: UIntVarOf<UInt> = alloc()
+
+    // Generate 1 buffer, put the resulting identifier in vertexbuffer
+    val bufferGenFunc: VertexBufferGenFunc = glGenBuffers!!
+    bufferGenFunc(1, vertexbuffer.ptr)
+
+
+    // The following commands will talk about our 'vertexbuffer' buffer
+    val bufferBindFunc: VertexBufferBindFunc = glBindBuffer!!
+    bufferBindFunc(GL_ARRAY_BUFFER.toUInt(), vertexbuffer.value)
+
+
+    // Give our vertices to OpenGL.
+    val bufferDataFunc: VertexBufferDataFunc = glBufferData!!
+    bufferDataFunc(
+        GL_ARRAY_BUFFER.toUInt(),
+        (floatArray.size * 4).signExtend(),
+        floatArray.refTo(0).getPointer(this.memScope),
+        GL_STATIC_DRAW.toUInt()
+    )
+}
