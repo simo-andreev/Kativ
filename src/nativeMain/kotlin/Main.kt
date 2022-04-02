@@ -1,5 +1,7 @@
 import kotlinx.cinterop.*
 import libcurl.*
+import platform.*
+import liba.*
 
 fun main(args: Array<String>) {
     curl_easy_init()?.apply {
@@ -9,7 +11,5 @@ fun main(args: Array<String>) {
         if (res != CURLE_OK)
             println("curl_easy_perform() failed ${curl_easy_strerror(res)?.toKString()}")
         curl_easy_cleanup(this)
-
-        val a = 2UL
     }
 }

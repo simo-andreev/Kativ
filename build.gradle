@@ -21,13 +21,8 @@ kotlin {
     nativeTarget.with {
         compilations.main {
             cinterops {
-                libcurl
-//                libcurl {
-//                    defFile project.file("src/nativeInterop/cinterop/libcurl.def")
-//                    packageName 'com.jetbrains.handson.http'
-//                    compilerOpts '-I/path'
-//                    includeDirs.allHeaders("path")
-//                }
+                libcurl;
+                liba;
             }
         }
         binaries {
@@ -44,6 +39,11 @@ kotlin {
 
         }
     }
+}
+
+wrapper {
+    gradleVersion = '7.1.1'
+    distributionType = 'all'
 }
 
 
