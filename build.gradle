@@ -19,6 +19,17 @@ kotlin {
     else throw new GradleException("Host OS is not supported in Kotlin/Native.")
 
     nativeTarget.with {
+        compilations.main {
+            cinterops {
+                libcurl
+//                libcurl {
+//                    defFile project.file("src/nativeInterop/cinterop/libcurl.def")
+//                    packageName 'com.jetbrains.handson.http'
+//                    compilerOpts '-I/path'
+//                    includeDirs.allHeaders("path")
+//                }
+            }
+        }
         binaries {
             executable {
                 entryPoint = 'main'
