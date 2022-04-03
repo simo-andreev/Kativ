@@ -1,6 +1,19 @@
+import glew.*
+import glfw.*
+import glut.GL_ARRAY_BUFFER
+import glut.GL_FLOAT
+import glut.GL_STATIC_DRAW
+import glut.GL_TRIANGLES
+import glut.GL_COLOR_BUFFER_BIT
+import glut.GLboolean
+import glut.PFNGLBINDBUFFERPROC
+import glut.PFNGLBINDVERTEXARRAYPROC
+import glut.PFNGLBUFFERDATAPROC
+import glut.PFNGLGENBUFFERSPROC
+import glut.PFNGLGENVERTEXARRAYSPROC
+import glut.glClear
+import glut.glDrawArrays
 import kotlinx.cinterop.*
-import libglew.*
-import libglfw.*
 import platform.posix.exit
 
 const val GL_TRUE: GLboolean = 1u
@@ -29,44 +42,46 @@ fun main() {
         exit(-1)
     }
 
+    glewExperimental = GL_TRUE
 
-    memScoped {
-        glfwMakeContextCurrent(window)
-        println("0")
-
-        vaoBind()
-
-        println("1")
-
-
-        glewExperimental = GL_TRUE
-
-        initGlew()
-
-        // Ensure we can capture the escape key being pressed below
-        glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE)
-
-        vbufBind(
-            floatArrayOf(
-                -1.0f, -1.0f, 0.0f,
-                1.0f, -1.0f, 0.0f,
-                0.0f, 1.0f, 0.0f,
-            )
+    glfwMakeContextCurrent(window)
+    initGlew()
+    // Ensure we can capture the escape key being pressed below
+    glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE)
+    vaoBind()
+    val buff = vbufBind(
+        floatArrayOf(
+            -1.0f, -1.0f, 0.0f,
+            1.0f, -1.0f, 0.0f,
+            0.0f, 1.0f, 0.0f,
         )
-        println("2")
+    )
 
-        do {
-            vaoBind()
-            println("3")
+    do {
+        glClear(GL_COLOR_BUFFER_BIT.toUInt());
 
-            // Swap buffers
-            glfwSwapBuffers(window);
-            glfwPollEvents();
-        } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0)
-        // Check if the ESC key was pressed or the window was closed
-        println("4")
+        glEnableVertexAttribArray!!(0u);
+        glBindBuffer!!(GL_ARRAY_BUFFER.toUInt(), buff);
+        println("3")
 
-    }
+        glVertexAttribPointer!!(
+            0u,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+            3,                  // size
+            GL_FLOAT.toUInt(),           // type
+            GL_FALSE,           // normalized?
+            0,                  // stride
+            null           // array buffer offset
+        )
+        // Draw the triangle !
+        glDrawArrays(GL_TRIANGLES, 0, 3); // Starting from vertex 0; 3 vertices total -> 1 triangle
+
+        glDisableVertexAttribArray!!(0u);
+
+        // Swap buffers
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    } while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0)
+    // Check if the ESC key was pressed or the window was closed
 
     glfwTerminate()
 }
@@ -107,13 +122,13 @@ private fun CPointer<UByteVarOf<UByte>>?.toKString(): CharSequence? {
     return sb
 }
 
-private inline fun MemScope.vaoBind() {
+private inline fun vaoBind() = memScoped {
     println("00")
 
     val vertexArrayId: UIntVarOf<UInt> = alloc()
     println("01")
 
-    val vaoGenFunc: VertexArraysGenFunc = glGenVertexArrays?: return
+    val vaoGenFunc: VertexArraysGenFunc = glGenVertexArrays ?: return
     println("02")
     vaoGenFunc(1, vertexArrayId.ptr)
     println("03")
@@ -124,7 +139,7 @@ private inline fun MemScope.vaoBind() {
     println("05")
 }
 
-private inline fun MemScope.vbufBind(floatArray: FloatArray) {
+private inline fun vbufBind(floatArray: FloatArray): UInt = memScoped {
     // This will identify our vertex buffer
     val vertexbuffer: UIntVarOf<UInt> = alloc()
 
@@ -146,4 +161,6 @@ private inline fun MemScope.vbufBind(floatArray: FloatArray) {
         floatArray.refTo(0).getPointer(this.memScope),
         GL_STATIC_DRAW.toUInt()
     )
+
+    return vertexbuffer.value
 }

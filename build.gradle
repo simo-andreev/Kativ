@@ -21,10 +21,10 @@ kotlin {
     nativeTarget.with {
         compilations.main {
             cinterops {
-                libcurl;
-                liba;
-                libglew;
-                libglfw;
+                glew;
+                glfw;
+                glut;
+                libgl;
             }
         }
         binaries {
@@ -45,7 +45,7 @@ kotlin {
 
 wrapper {
     gradleVersion = '7.1.1'
-    distributionType = 'all'
+    distributionType = 'ALL'
 }
 
 
