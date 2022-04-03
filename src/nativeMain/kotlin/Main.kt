@@ -1,10 +1,10 @@
 import glew.*
 import glfw.*
 import glut.GL_ARRAY_BUFFER
+import glut.GL_COLOR_BUFFER_BIT
 import glut.GL_FLOAT
 import glut.GL_STATIC_DRAW
 import glut.GL_TRIANGLES
-import glut.GL_COLOR_BUFFER_BIT
 import glut.GLboolean
 import glut.PFNGLBINDBUFFERPROC
 import glut.PFNGLBINDVERTEXARRAYPROC
@@ -56,9 +56,17 @@ fun main() {
             0.0f, 1.0f, 0.0f,
         )
     )
+    println(errorString)
 
+    val shaderProgram = ShaderProgram(
+        "/home/simeon/Code/Desktop/IdeaProjects/Kativ/src/nativeMain/resources/SimpleVertexShader.glsl",
+        "/home/simeon/Code/Desktop/IdeaProjects/Kativ/src/nativeMain/resources/SimpleFragmentShader.glsl"
+    )
     do {
         glClear(GL_COLOR_BUFFER_BIT.toUInt());
+
+        glClear((GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT).toUInt())
+        shaderProgram.use()
 
         glEnableVertexAttribArray!!(0u);
         glBindBuffer!!(GL_ARRAY_BUFFER.toUInt(), buff);
@@ -107,8 +115,7 @@ private inline fun initGlew() {
 }
 
 private fun CPointer<UByteVarOf<UByte>>?.toKString(): CharSequence? {
-    if (this == null)
-        return null
+    if (this == null) return null
 
     var i = 0
     var d: UByte = this[i]
